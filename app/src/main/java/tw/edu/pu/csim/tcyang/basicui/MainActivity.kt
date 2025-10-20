@@ -80,7 +80,6 @@ fun Main(modifier: Modifier = Modifier) {
     }
     var mper: MediaPlayer? by remember { mutableStateOf(null) }
 
-    // 使用 DisposableEffect 來管理 MediaPlayer 的生命週期
     DisposableEffect(Unit) { // Unit 作為 key 表示這個 effect 只會執行一次
         onDispose {
             mper?.release()
