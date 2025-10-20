@@ -150,7 +150,6 @@ fun Main(modifier: Modifier = Modifier) {
 
         Spacer(modifier = Modifier.size(10.dp))
 
-        // LazyRow 滾動動物列表 (保持不變)
         LazyRow {
             items(51) { index ->
                 Row(
