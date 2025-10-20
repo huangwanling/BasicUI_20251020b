@@ -67,33 +67,43 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun Main(modifier: Modifier = Modifier) {
+    // 取得 Context 和 Activity
     val context = LocalContext.current
+    // 這裡我們不再在頂部宣告 activity 變數，而是直接在按鈕的 onClick 內部安全地轉換。
 
+    // 固定的作者文字
     val authorText = stringResource(R.string.app_author)
 
-
-
+    // 狀態變數：用於切換新文字 (abc / edf)
     val textA = "abc"
     val textB = "edf"
     var currentToggleText by remember {
         mutableStateOf(textA)
     }
-    var mper: MediaPlayer? by remember { mutableStateOf(null) }
 
+    // *** 新增的狀態變數：用於切換企鵝和狐狸圖片 ***
+    var isPenguin by remember { mutableStateOf(true) } // true: 企鵝 (animal1), false: 狐狸 (animal8)
+
+    var mper: MediaPlayer? by remember { mutableStateOf(null) }
+    // 使用 DisposableEffect 來管理 MediaPlayer 的生命週期
+    // 當 Main Composable 離開組合時，會執行 onDispose 區塊
     DisposableEffect(Unit) { // Unit 作為 key 表示這個 effect 只會執行一次
         onDispose {
+            // 釋放 MediaPlayer 資源，避免記憶體洩漏
             mper?.release()
             mper = null
         }
     }
 
 
+
     val Animals = listOf(
-        R.drawable.animal0, R.drawable.animal1,
+        R.drawable.animal0, R.drawable.animal1, // [1] 是企鵝
         R.drawable.animal2, R.drawable.animal3,
         R.drawable.animal4, R.drawable.animal5,
         R.drawable.animal6, R.drawable.animal7,
-        R.drawable.animal8, R.drawable.animal9
+        R.drawable.animal8, // [8] 是狐狸
+        R.drawable.animal9
     )
 
     val AnimalsName = listOf(
@@ -118,6 +128,7 @@ fun Main(modifier: Modifier = Modifier) {
 
         Spacer(modifier = Modifier.size(10.dp))
 
+        // 顯示作者文字
         Text(
             text = authorText,
             fontSize = 20.sp,
@@ -125,6 +136,7 @@ fun Main(modifier: Modifier = Modifier) {
         )
         Spacer(modifier = Modifier.size(10.dp))
 
+        // 上方的三個圖示 (保持不變)
         Row {
             Image(
                 painter = painterResource(id = R.drawable.android),
@@ -150,7 +162,6 @@ fun Main(modifier: Modifier = Modifier) {
         }
 
         Spacer(modifier = Modifier.size(10.dp))
-
         LazyRow {
             items(51) { index ->
                 Row(
@@ -173,9 +184,12 @@ fun Main(modifier: Modifier = Modifier) {
 
         Spacer(modifier = Modifier.size(10.dp))
 
+        // 按鈕和切換文字的整體容器
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
 
+            // **第一排：測試按鈕 (單獨一排)**
             Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.padding(bottom = 5.dp)) {
+                // 1. 測試按鈕 (切換 abc/edf)
                 Button(onClick = {
                     currentToggleText = if (currentToggleText == textA) textB else textA
                 }) {
@@ -183,6 +197,7 @@ fun Main(modifier: Modifier = Modifier) {
                 }
             }
 
+            // **中間：顯示可切換的文字 (abc / edf)**
             Text(
                 text = currentToggleText,
                 fontSize = 24.sp,
@@ -191,14 +206,16 @@ fun Main(modifier: Modifier = Modifier) {
             )
 
 
+            // **第三排：歡迎修課、展翅飛翔、結束App (三個按鈕一排) - 保持不變**
             Row(horizontalArrangement = Arrangement.Center) {
+                // 2. 歡迎修課按鈕
                 Button(
                     onClick = {
                         mper?.release()
                         mper = null
+                        mper = MediaPlayer.create(context, R.raw.tcyang) //設定音樂
+                        mper?.start()   //開始播放
 
-                        mper = MediaPlayer.create(context, R.raw.fly)
-                        mper?.start()
                     },
                     modifier = Modifier
                         .fillMaxWidth(0.33f)
@@ -211,12 +228,12 @@ fun Main(modifier: Modifier = Modifier) {
 
                 Spacer(modifier = Modifier.size(10.dp))
 
+                // 3. 展翅飛翔按鈕 (彈出 Toast)
                 Button(onClick = {
                     mper?.release()
                     mper = null
-
-                    mper = MediaPlayer.create(context, R.raw.fly)
-                    mper?.start()
+                    mper = MediaPlayer.create(context, R.raw.fly) //設定音樂
+                    mper?.start()   //開始播放
 
                     Toast.makeText(context, "展翅飛翔，實現夢想！", Toast.LENGTH_LONG).show()
                 }   , modifier = Modifier
@@ -239,6 +256,44 @@ fun Main(modifier: Modifier = Modifier) {
                     elevation = ButtonDefaults.buttonElevation(defaultElevation = 10.dp)
                 ) {
                     Text(text = "結束App")
+                }
+            }
+
+            // **新增的：第四排 - 企鵝/狐狸切換按鈕 (圖片在按鈕內)**
+            Spacer(modifier = Modifier.size(10.dp)) // 與上一排按鈕間隔
+
+            val currentAnimalId = if (isPenguin) R.drawable.animal1 else R.drawable.animal8
+            val buttonText = if (isPenguin) "點我變成狐狸" else "點我變成企鵝"
+
+            Row(horizontalArrangement = Arrangement.Center) {
+                Button(
+                    onClick = {
+                        isPenguin = !isPenguin // 切換狀態
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth(0.8f), // 讓按鈕佔用較多寬度
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF8C00)), // 橘色
+                    shape = CutCornerShape(10.dp),
+                    border = BorderStroke(2.dp, Color.Black),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 5.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Image(
+                            painter = painterResource(id = currentAnimalId),
+                            contentDescription = "切換動物圖示",
+                            modifier = Modifier
+                                .size(36.dp) // 較大的圖片
+                                .padding(end = 8.dp)
+                        )
+                        Text(
+                            text = buttonText,
+                            fontSize = 18.sp,
+                            color = Color.White
+                        )
+                    }
                 }
             }
         }
